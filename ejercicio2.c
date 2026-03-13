@@ -1,7 +1,3 @@
-/* 
- * Objetivo: Utilizar el comportamiento LIFO para invertir cadenas.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -19,42 +15,88 @@ typedef struct {
     ELEMENTO *tope;
 } PILA;
 
-// --- Funciones de Pila (A completar por el alumno) ---
-void inicializar(PILA *s);
-void push(PILA *s, DATA x);
-DATA pop(PILA *s);
-int estavacia(PILA *s);
+// --- Funciones de Pila (Implementadas) ---
+
+void inicializar(PILA *s) {
+    s->cnt = 0;
+    s->tope = NULL;
+}
+
+void push(PILA *s, DATA x) {
+    ELEMENTO *nuevo = (ELEMENTO *)malloc(sizeof(ELEMENTO));
+    if (nuevo == NULL) return; // Error de memoria
+    nuevo->d = x;
+    nuevo->siguiente = s->tope;
+    s->tope = nuevo;
+    s->cnt++;
+}
+
+DATA pop(PILA *s) {
+    if (s->tope == NULL) return '\0';
+    ELEMENTO *temp = s->tope;
+    DATA dato = temp->d;
+    s->tope = temp->siguiente;
+    s->cnt--;
+    free(temp);
+    return dato;
+}
+
+int estavacia(PILA *s) {
+    return (s->cnt == 0);
+}
 
 /**
  * TAREA PRINCIPAL: Determinar si la cadena es palíndromo.
- * Estrategia sugerida:
- * 1. Recorrer la cadena y meter cada letra en la PILA A.
- * 2. Pasar la mitad de la PILA A a una PILA B para comparar 
- * (o usar una estrategia de inversión total).
  */
 int esPalindromo(char cadena[]) {
-    PILA original, invertida;
+    PILA original, invertida, auxiliar;
     inicializar(&original);
     inicializar(&invertida);
+    inicializar(&auxiliar);
 
     int i, longitud = strlen(cadena);
 
-    // 1. Filtrar y llenar la pila original
+    // 1. Filtrar letras y llenar la pila 'auxiliar'
     for (i = 0; i < longitud; i++) {
-        if (isalpha(cadena[i])) { // Solo letras
-            char letra = tolower(cadena[i]);
-            push(&original, letra);
+        if (isalpha(cadena[i])) {
+            push(&auxiliar, tolower(cadena[i]));
         }
     }
 
-    // 2. Crear la versión invertida
-    // TIP: Al pasar elementos de una pila a otra, el orden se invierte.
-    // Pero para comparar, necesitamos que una mantenga el orden original.
-    // ¿Cómo usarías las dos pilas para tener la cadena al derecho y al revés?
-    
-    /* TODO: Implementar lógica de comparación usando las dos pilas */
+    // 2. Al pasar de 'auxiliar' a 'original', el orden se invierte una vez.
+    // Al pasar de 'original' a 'invertida', se invierte otra vez.
+    // Esto nos permite tener una pila "al derecho" y otra "al revés".
+    while (!estavacia(&auxiliar)) {
+        DATA letra = pop(&auxiliar);
+        push(&original, letra);  // Queda en orden normal
+        push(&invertida, letra); // Usaremos una copia para invertirla después
+    }
 
-    return 1; // Retornar 1 si es palíndromo, 0 si no.
+    // Para que 'invertida' realmente sea el reverso de 'original',
+    // necesitamos que 'original' sea el orden de entrada.
+    // Re-ajuste de lógica:
+    // Pila A (original): letras en orden de entrada.
+    // Pila B (invertida): letras en orden inverso.
+    
+    // Lo más simple: Comparamos la cadena original contra el POP de la pila
+    int esPal = 1;
+    int j = 0;
+    for (i = 0; i < longitud; i++) {
+        if (isalpha(cadena[i])) {
+            char letraOriginal = tolower(cadena[i]);
+            char letraInvertida = pop(&original); // El pop da el último que entró (reverso)
+            
+            if (letraOriginal != letraInvertida) {
+                esPal = 0;
+                break;
+            }
+        }
+    }
+
+    // Limpiar pilas si quedaron elementos
+    while(!estavacia(&original)) pop(&original);
+
+    return esPal;
 }
 
 int main() {
