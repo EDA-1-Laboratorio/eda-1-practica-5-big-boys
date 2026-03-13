@@ -117,4 +117,69 @@ void rellenar(PILA *stk, const char *str){
         }
         
         if (!estallena(&aux)) { 
-            push(&
+            push(&aux, d); // Empujamos a la auxiliar para procesar la cadena.
+        }
+    }
+    
+    // Ahora tomamos el dato de la pila auxiliar y lo pasamos a la principal.
+    // Esto invierte el orden para que se procesen correctamente después.
+    while (!estavacia(&aux)) { 
+        d = pop(&aux); 
+        if (!estallena(stk)) { 
+            push(stk, d); 
+        }
+    }
+}
+
+// Funcion evaluar
+int evaluar(PILA *polaca) {
+    DATO d, d1, d2;
+    PILA evaluacion;
+
+    // Inicializar la pila de evaluación para almacenar los operandos.
+    inicializar(&evaluacion); 
+
+    while(!estavacia(polaca)) {
+        d = pop(polaca);
+        switch (d.tipo) { 
+            case VALOR: 
+                // Si el dato es un valor, se empuja a la pila de evaluación.
+                push(&evaluacion, d); 
+                break;
+            case OPERADOR: 
+                // Sacamos los dos argumentos de la pila de evaluación.
+                // d2 es el segundo operando y d1 el primero (LIFO).
+                d2 = pop(&evaluacion); 
+                d1 = pop(&evaluacion);
+                d.tipo = VALOR; // El resultado será un VALOR.
+                
+                switch (d.u.op) { 
+                    case '+': d.u.val = d1.u.val + d2.u.val; break;
+                    case '-': d.u.val = d1.u.val - d2.u.val; break;
+                    case '*': d.u.val = d1.u.val * d2.u.val; break;
+                }
+                // Empujamos el resultado de vuelta para futuras operaciones.
+                push(&evaluacion, d); 
+                break;
+        }
+    }
+
+    // El resultado final se encuentra en el tope de la pila de evaluación.
+    d = pop(&evaluacion); 
+    return d.u.val; 
+}
+
+int main(void) {
+    char str[] = "3 4 5 + *"; // Representa (4 + 5) * 3 = 27
+    PILA polaca;
+
+    printf("--- INICIO DE PRÁCTICA ---\n");
+    inicializar(&polaca); 
+    printf("Expresion: %s\n", str);
+    
+    rellenar(&polaca, str);  
+    printf("Resultado esperado: 27\n");
+    printf("Resultado obtenido: %d\n", evaluar(&polaca)); 
+
+    return 0;
+}
